@@ -1,0 +1,34 @@
+# ============================================================
+# requirements.txt — Predictive VM Resource Provisioning System
+# ============================================================
+# Install all dependencies with:
+#   pip install -r requirements.txt
+#
+# WHAT EACH PACKAGE DOES:
+# -------------------------
+# pandas        - Data loading, manipulation, and time-series operations
+# numpy         - Numerical computing and array operations
+# scikit-learn  - Data scaling (MinMaxScaler), evaluation metrics (RMSE, MAE)
+# xgboost       - Gradient boosted decision tree model for CPU forecasting
+# tensorflow    - Deep learning framework for building the LSTM model
+# statsmodels   - ARIMA statistical baseline forecasting model
+# scipy         - Required internally by statsmodels for statistical computations
+# simpy         - Discrete-event simulation for cloud data center environment
+# streamlit     - Interactive dashboard web application framework
+# plotly        - Interactive charts and plots for the dashboard
+# matplotlib    - Static chart generation for model comparison plots
+# joblib        - Save/load trained ML models and preprocessed data artifacts
+
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.2.0
+xgboost>=2.0.0
+tensorflow>=2.13.0
+statsmodels>=0.14.0
+scipy>=1.10.0
+simpy>=4.0.0
+streamlit>=1.28.0
+plotly>=5.15.0
+matplotlib>=3.7.0
+joblib>=1.3.0
+simpy>=4.0.0
