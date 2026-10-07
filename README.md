@@ -48,7 +48,7 @@ a reactive system reacts too late and where forecasting is useful.
 
 *Dashboard Section A - historical workload patterns (CPU and memory), with average, peak, minimum CPU and total records.*
 
-<img width="959" alt="Screenshot 2026-10-05 152829" src="screenshots/Screenshot_2026-10-05_152829.png" />
+<img width="959" height="538" alt="Screenshot 2026-10-05 152829" src="https://github.com/user-attachments/assets/6ab3b1b1-2e56-43f9-9c14-d8f69627923a" />
 
 ---
 
@@ -71,11 +71,13 @@ predict the next CPU utilisation value.
 
 *Dashboard Section B - model leaderboard and actual vs predicted CPU utilisation on the test window.*
 
-<img width="959" alt="Screenshot 2026-10-05 152839" src="screenshots/Screenshot_2026-10-05_152839.png" />
+<img width="959" height="537" alt="Screenshot 2026-10-05 152839" src="https://github.com/user-attachments/assets/7590b5e1-fc78-46ca-91cd-0718cf846ef8" />
+
 
 *Static comparison chart saved by `train_models.py`.*
 
-<img width="959" alt="Screenshot 2026-10-05 152859" src="screenshots/Screenshot_2026-10-05_152859.png" />
+<img width="959" height="539" alt="Screenshot 2026-10-05 152859" src="https://github.com/user-attachments/assets/ac645c6b-7e78-43c9-8e32-6c97c23a8cf5" />
+
 
 ---
 
@@ -98,7 +100,8 @@ lower than XGBoost. **LSTM is selected** for the simulation.
 
 *Model evaluation leaderboard with RMSE, MAE and MAPE (%).*
 
-<img width="959" alt="Screenshot 2026-10-05 152844" src="screenshots/Screenshot_2026-10-05_152844.png" />
+<img width="959" height="539" alt="Screenshot 2026-10-05 152844" src="https://github.com/user-attachments/assets/df58ef1e-f23d-4b30-b12f-07ba55ff8f4e" />
+
 
 ---
 
@@ -123,11 +126,13 @@ sharp spike, which caused SLA violations (see Results Summary).
 
 *Dashboard Section C - CPU demand vs provisioned capacity and active hosts/VMs over time.*
 
-<img width="959" alt="Screenshot 2026-10-05 152923" src="screenshots/Screenshot_2026-10-05_152923.png" />
+<img width="956" height="442" alt="Screenshot 2026-10-05 152923" src="https://github.com/user-attachments/assets/a09f5a83-cfb4-4a12-b77b-c1be817ec7eb" />
+
 
 *Scaling decision breakdown and live decision log.*
 
-<img width="959" alt="Screenshot 2026-10-05 152935" src="screenshots/Screenshot_2026-10-05_152935.png" />
+<img width="959" height="406" alt="Screenshot 2026-10-05 152935" src="https://github.com/user-attachments/assets/b22e91f4-b61b-4974-a0d7-de4fa7e1ac29" />
+
 
 ---
 
@@ -149,11 +154,13 @@ plot and switch between predictive and reactive mode.
 
 *Dashboard overview with the KPI cards (best model, forecast RMSE, SLA violations, CPU waste saved, early scale-ups).*
 
-<img width="959" height="500" alt="Screenshot 2026-10-05 152810" src="https://github.com/user-attachments/assets/03a9c8d0-4496-449c-bd8f-19dae2e28d89" />
+<img width="959" height="500" alt="Screenshot 2026-10-05 152810" src="https://github.com/user-attachments/assets/0907f664-1385-49d6-bbc2-1bc0928b931c" />
+
 
 *Dashboard Section D - cluster resource utilisation, predictive vs reactive.*
 
-<img width="959" alt="Screenshot 2026-10-05 152943" src="screenshots/Screenshot_2026-10-05_152943.png" />
+<img width="959" height="539" alt="Screenshot 2026-10-05 152943" src="https://github.com/user-attachments/assets/f8740a72-8f10-4e60-971b-d0f2c39af4de" />
+
 
 ### Section E - Interactive Workload Spike Simulator
 
@@ -184,7 +191,8 @@ provisioned capacity, the section shows an SLA breach instead.
 cluster from the forecast (look-ahead), while the reactive controller sizes it only from the demand
 it currently sees.
 
-<img width="959" alt="Screenshot 2026-10-05 153002" src="screenshots/Screenshot_2026-10-05_153002.png" />
+<img width="956" height="505" alt="Screenshot 2026-10-05 153002" src="https://github.com/user-attachments/assets/58c6fb60-5a77-4c9c-b04b-0cba8730d233" />
+
 
 ---
 
