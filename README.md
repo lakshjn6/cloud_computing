@@ -1,39 +1,41 @@
-<img width="959" height="539" alt="Screenshot 2026-10-05 152844" src="https://github.com/user-attachments/assets/7d10cf54-24e3-44ea-95c6-f2b91140007f" /><img width="959" height="539" alt="Screenshot 2026-10-05 152734" src="https://github.com/user-attachments/assets/97b77821-c389-4c39-9c9f-7771356b7bda" /># Predictive VM Resource Provisioning in a Cloud Data Centre
+# Predictive VM Resource Provisioning in a Cloud Data Centre
 
-Machine-learning based forecasting of VM CPU demand, combined with a cloud simulation that
-provisions VMs **proactively** (before the demand arrives) and an interactive dashboard.
+**Stack:** Python 3.12, ARIMA, XGBoost, LSTM (TensorFlow-Keras), SimPy, Streamlit, Plotly
+**Dataset:** Bitbrains GWA-T-12 VM workload trace (`1.csv`)
 
-**Stack:** Python 3.12 · scikit-learn / statsmodels (ARIMA) · XGBoost · TensorFlow-Keras (LSTM) · SimPy · Streamlit · Plotly
+## Problem Statement
+Develop a machine learning application to forecast future VM resource requirements in a cloud
+data centre. Use a suitable workload dataset and compare at least three ML models for predicting
+CPU and/or memory. Evaluate the models with appropriate metrics. Integrate the selected model
+with a cloud simulation environment to demonstrate proactive VM provisioning based on predicted
+demand. Develop a dashboard to visualise workload patterns, predictions, VM provisioning decisions
+and resource utilisation.
 
----
+## Project Overview
+A cloud provider must keep enough VMs running to serve demand, but too many VMs waste money and
+too few break the SLA. A reactive system adds VMs only after the load has already increased.
+This project forecasts CPU demand five minutes ahead with machine learning, so that VMs can be
+added **before** the spike arrives (proactive provisioning). The whole flow is:
 
-## 1. Problem Statement
-
-Develop a machine learning application to forecast future virtual machine resource requirements
-in a cloud data centre. Use a suitable workload dataset and compare at least three ML models for
-predicting CPU and/or memory. Evaluate them with appropriate prediction metrics. Integrate the
-selected model with a cloud simulation environment to demonstrate proactive VM provisioning based
-on predicted demand. Develop a dashboard to visualise workload patterns, predictions, VM
-provisioning decisions and resource utilisation.
-
-## 2. How each task is covered
-
-| Task | Requirement | Where it is done | Screenshot |
-|------|-------------|------------------|------------|
-| 1 | Suitable workload dataset + forecasting application | `data_prep.py`, Bitbrains `1.csv` | Section 3 |
-| 2 | Compare at least 3 ML models | `train_models.py` (ARIMA, XGBoost, LSTM) | Section 4 |
-| 3 | Evaluate with prediction metrics | RMSE, MAE, MAPE | Section 5 |
-| 4 | Integrate best model with a cloud simulator, proactive provisioning | `cloud_sim.py` (SimPy) | Section 6 |
-| 5 | Dashboard (workload, predictions, decisions, utilisation) | `dashboard.py` (Streamlit) | Section 7 |
+`Dataset -> Preprocessing -> Train 3 models -> Compare metrics -> Select best -> Cloud simulation -> Dashboard`
 
 ---
 
-<img width="959" height="500" alt="Screenshot 2026-10-05 152810" src="https://github.com/user-attachments/assets/03a9c8d0-4496-449c-bd8f-19dae2e28d89" />
+## Task 1 - Workload Dataset and Forecasting Application
 
-## 3. Task 1 - Dataset and workload patterns
+**Dataset.** The Bitbrains GWA-T-12 trace comes from a real managed-hosting data centre. Each row is
+a 5-minute sample of one VM with CPU usage (MHz and %), CPU capacity, memory usage, memory capacity,
+disk throughput and network throughput. The loaded file has **8,634 rows**.
 
-**Dataset:** Bitbrains GWA-T-12 VM trace (`1.csv`) with CPU usage, memory usage, capacity,
-disk and network columns. Samples are 5 minutes apart. The loaded file has **8,634 rows**.
+**Why this dataset.** It contains real CPU and memory measurements per VM at a regular interval,
+which is what time-series forecasting needs. It is small enough to run on a laptop.
+
+**Preprocessing.** The raw file is semicolon-separated, so it is split into proper columns, the
+timestamp is converted to datetime, the data is cleaned, scaled and converted into sequences for
+the models. Train and test sets are split **chronologically** (no shuffling) so the future never
+leaks into training.
+
+**Workload observations.**
 
 | Statistic | Value |
 |-----------|-------|
@@ -41,170 +43,188 @@ disk and network columns. Samples are 5 minutes apart. The loaded file has **8,6
 | Peak CPU usage | 97.9 % |
 | Minimum CPU usage | 0.5 % |
 
-The workload is bursty: long idle periods followed by sharp CPU and memory spikes. This is exactly
-the situation where reactive scaling reacts too late.
+The workload is bursty: long idle periods with sudden CPU and memory spikes. This is the case where
+a reactive system reacts too late and where forecasting is useful.
 
+*Dashboard Section A - historical workload patterns (CPU and memory), with average, peak, minimum CPU and total records.*
 
-
-
-<img width="959" height="538" alt="Screenshot 2026-10-05 152829" src="https://github.com/user-attachments/assets/58266833-5aee-482c-93cc-73d9d12820cf" />
-
----
-
-## 4. Task 2 - Model comparison (three models)
-
-| Model | Type |
-|-------|------|
-| ARIMA | Statistical baseline |
-| XGBoost Regressor | Gradient-boosted trees |
-| LSTM Neural Net | Deep learning (sequence model) |
-
-All models are trained on the same chronological train split and tested on a held-out test set
-(no shuffling, so the future never leaks into training).
-
-
-
-Static comparison chart generated by `train_models.py` (`model_performance_comparison.png`):
-<img width="959" height="537" alt="Screenshot 2026-10-05 152839" src="https://github.com/user-attachments/assets/71b847ca-aab7-4893-9dc0-c053055d8e9c" />
-<img width="959" height="539" alt="Screenshot 2026-10-05 152844" src="https://github.com/user-attachments/assets/d96c6bef-cbe4-42f5-9998-9eb8226bf430" />
-
-
-<img width="959" height="539" alt="Screenshot 2026-10-05 152859" src="https://github.com/user-attachments/assets/cb883779-6a3d-4076-b3ea-9ca037dc7f92" />
+<img width="959" alt="Screenshot 2026-10-05 152829" src="screenshots/Screenshot_2026-10-05_152829.png" />
 
 ---
 
-## 5. Task 3 - Evaluation metrics
+## Task 2 - Comparison of Three ML Models
+
+| Model | Type | Role |
+|-------|------|------|
+| ARIMA | Statistical | Baseline |
+| XGBoost Regressor | Gradient-boosted trees | Machine learning model |
+| LSTM Neural Net | Recurrent deep learning | Sequence model |
+
+All three models are trained on the same training data and tested on the same unseen test set to
+predict the next CPU utilisation value.
+
+- **ARIMA** assumes a linear, stationary pattern. On this spiky data it predicts an almost constant
+  value and cannot follow the spikes.
+- **XGBoost** captures non-linear relationships and follows the spikes, but it also produces false
+  small peaks.
+- **LSTM** learns the time dependency across previous steps and follows the real spike most closely.
+
+*Dashboard Section B - model leaderboard and actual vs predicted CPU utilisation on the test window.*
+
+<img width="959" alt="Screenshot 2026-10-05 152839" src="screenshots/Screenshot_2026-10-05_152839.png" />
+
+*Static comparison chart saved by `train_models.py`.*
+
+<img width="959" alt="Screenshot 2026-10-05 152859" src="screenshots/Screenshot_2026-10-05_152859.png" />
+
+---
+
+## Task 3 - Evaluation with Prediction Metrics
 
 | Model | RMSE | MAE | MAPE (%) |
 |-------|------|-----|----------|
 | ARIMA Baseline | 31.5995 | 29.9825 | 3749.72 |
 | XGBoost Regressor | 9.7230 | 2.4174 | 58.10 |
-| **LSTM Neural Net (best)** | **8.2858** | **1.6094** | **52.91** |
+| **LSTM Neural Net** | **8.2858** | **1.6094** | **52.91** |
 
-- **RMSE** penalises large errors (important for missing spikes).
-- **MAE** is the average error in CPU percentage points.
-- **MAPE** is the relative error. It is inflated because the CPU is close to 0 % for most of the
-  trace, so tiny absolute errors become large percentages. RMSE and MAE are the more reliable
-  indicators here.
-- ARIMA predicts an almost constant value, so it cannot follow spikes. It is kept as a baseline.
+- **RMSE** (root mean squared error) penalises large errors, which matters because missing a spike causes SLA violations.
+- **MAE** (mean absolute error) is the average error in CPU percentage points.
+- **MAPE** (mean absolute percentage error) is the relative error. It is very high here because the CPU
+  is close to 0 % most of the time, so small absolute errors become huge percentages. RMSE and MAE are
+  therefore the more reliable metrics for this dataset.
 
-**Selected model: LSTM** (lowest RMSE and MAE).
+**Result:** LSTM has the lowest RMSE (8.29) and MAE (1.61), about 74 % lower RMSE than ARIMA and 15 %
+lower than XGBoost. **LSTM is selected** for the simulation.
 
-<img width="956" height="442" alt="Screenshot 2026-10-05 152923" src="https://github.com/user-attachments/assets/3db66d73-4700-446a-a55e-c9a6e1ac050b" />
-<img width="959" height="406" alt="Screenshot 2026-10-05 152935" src="https://github.com/user-attachments/assets/3c5780fa-be71-45a4-94be-64e7c2b282c1" />
+*Model evaluation leaderboard with RMSE, MAE and MAPE (%).*
 
-
-
+<img width="959" alt="Screenshot 2026-10-05 152844" src="screenshots/Screenshot_2026-10-05_152844.png" />
 
 ---
 
-## 6. Task 4 - Cloud simulation and proactive provisioning
+## Task 4 - Cloud Simulation and Proactive VM Provisioning
 
-`cloud_sim.py` runs a SimPy data-centre simulation. Every 5-minute step the controller decides how
-many physical hosts (and therefore VMs) to keep active:
+A SimPy discrete-event simulation models a data centre of physical hosts running VMs. Every 5-minute
+step the controller decides how many hosts to keep active. Two controllers are compared:
 
-- **Predictive (AI) controller** - uses the LSTM forecast of the *next* step, so capacity is added
-  before the spike arrives.
-- **Reactive (baseline) controller** - uses only the current demand.
-- Decisions are logged as `HOLD`, `SCALE_UP +n`, `SCALE_DOWN -n`.
+| Controller | Decision is based on |
+|------------|----------------------|
+| **Predictive (AI)** | LSTM forecast of the next step, so capacity is added before the spike |
+| **Reactive (baseline)** | Current observed demand only |
 
+Each step produces one decision: `HOLD`, `SCALE_UP +n` or `SCALE_DOWN -n`. The dashboard shows the
+actual demand, predicted demand, provisioned capacity, active hosts and VMs, SLA violations and a
+log of every decision. An interactive spike simulator lets the user choose a base load and a spike
+size and compare how both controllers respond.
 
+**Result of the run.** The predictive controller made 33 correct early scale-ups and wasted 737 fewer
+CPU units than the reactive controller. The LSTM sometimes under-predicts at the very start of a
+sharp spike, which caused SLA violations (see Results Summary).
 
+*Dashboard Section C - CPU demand vs provisioned capacity and active hosts/VMs over time.*
 
+<img width="959" alt="Screenshot 2026-10-05 152923" src="screenshots/Screenshot_2026-10-05_152923.png" />
 
+*Scaling decision breakdown and live decision log.*
 
-
-Decision breakdown and live decision log:
-
-<img width="959" height="539" alt="Screenshot 2026-10-05 152943" src="https://github.com/user-attachments/assets/43bab878-59de-4932-bf4d-74f9d2a0741a" />
-
-Interactive spike simulator (choose base load and spike size, then compare how both controllers respond):
-
-<img width="956" height="505" alt="Screenshot 2026-10-05 153002" src="https://github.com/user-attachments/assets/524e3e8a-b866-4654-8a34-90e180507b00" />
+<img width="959" alt="Screenshot 2026-10-05 152935" src="screenshots/Screenshot_2026-10-05_152935.png" />
 
 ---
 
-## 7. Task 5 - Dashboard
+## Task 5 - Dashboard
 
-The Streamlit dashboard has five sections:
+The Streamlit dashboard (`dashboard.py`) visualises everything:
 
-| Section | Content |
-|---------|---------|
+| Section | What it shows |
+|---------|---------------|
+| Header KPIs | Best model, forecast RMSE, SLA violations, CPU waste saved, early scale-ups |
 | A | Historical workload patterns (CPU and memory) |
 | B | Model leaderboard and actual vs predicted curves |
-| C | VM provisioning decisions, scaling breakdown, decision log |
-| D | Cluster resource utilisation: predictive vs reactive |
+| C | VM provisioning decisions, scaling breakdown and decision log |
+| D | Cluster resource utilisation, predictive vs reactive |
 | E | Interactive workload spike simulator |
 
-The sidebar lets you re-run the full pipeline, change the display window, select which forecast
-models to plot and switch between predictive and reactive mode.
+The sidebar can re-run the full pipeline, change the display window, select which forecast models to
+plot and switch between predictive and reactive mode.
 
-Overview KPIs:
+*Dashboard overview with the KPI cards (best model, forecast RMSE, SLA violations, CPU waste saved, early scale-ups).*
 
-<img width="956" height="505" alt="Screenshot 2026-10-05 153002" src="https://github.com/user-attachments/assets/69ef07ea-1e8b-463b-a1d9-0f9ccdbc0c9c" />
+<img width="959" height="500" alt="Screenshot 2026-10-05 152810" src="https://github.com/user-attachments/assets/03a9c8d0-4496-449c-bd8f-19dae2e28d89" />
 
+*Dashboard Section D - cluster resource utilisation, predictive vs reactive.*
 
-Resource utilisation (predictive vs reactive):
+<img width="959" alt="Screenshot 2026-10-05 152943" src="screenshots/Screenshot_2026-10-05_152943.png" />
 
-<img width="767" height="245" alt="image" src="https://github.com/user-attachments/assets/f6f6c526-4779-4b5d-bfa6-416986a4eba0" />
+### Section E - Interactive Workload Spike Simulator
 
+This section lets the user create a traffic burst manually and see how both controllers react to it
+in real time, without waiting for a spike in the dataset.
+
+**Inputs (sliders)**
+- **Base Cluster Utilisation (%)** - the normal load on the cluster before the spike (example: 50 %).
+- **Simulated Spike (+% CPU)** - the extra CPU demand added by the burst (example: +30 %).
+- **Trigger Spike** button - applies the spike and updates all outputs.
+
+**Outputs**
+
+| Output | Meaning | Example run |
+|--------|---------|-------------|
+| Actual Spike Demand | Base load plus spike | 80.0 % |
+| ML Forecast (Prediction) | Demand predicted by the model, with its error | 79.4 % (-0.6 % error) |
+| AI Hosts Provisioned | Hosts added by the proactive (look-ahead) controller | 10 |
+| Reactive Hosts | Hosts added by the reactive (current-demand) controller | 10 |
+| Provisioned Capacity | Capacity available to absorb the demand, per controller | 100 % each |
+| SLA status | Whether the demand is absorbed by the capacity | SLA MAINTAINED (80 % demand absorbed by 100 % capacity) |
+
+A bar chart compares Actual Demand, AI Prediction, AI Provisioned Capacity and Reactive Capacity, so the
+gap between demand and provisioned capacity is visible at a glance. If the spike is larger than the
+provisioned capacity, the section shows an SLA breach instead.
+
+**Purpose.** It demonstrates the idea of the project interactively: the predictive controller sizes the
+cluster from the forecast (look-ahead), while the reactive controller sizes it only from the demand
+it currently sees.
+
+<img width="959" alt="Screenshot 2026-10-05 153002" src="screenshots/Screenshot_2026-10-05_153002.png" />
 
 ---
 
-## 8. Results summary
+## Results Summary
 
 | Metric | Predictive (AI) | Reactive (baseline) |
 |--------|-----------------|---------------------|
 | Average utilisation | 11.3 % | 10.9 % |
 | Wasted CPU units | 32,707 | 33,444 |
 | SLA violations | 13 | 0 |
+| Correct early scale-ups | 33 | - |
 
-The proactive controller wasted **737 fewer CPU units** and made **33 correct early scale-ups**, but
-it also recorded more SLA violations than the reactive baseline in this run.
+The predictive controller uses resources slightly better, but in this run it had more SLA violations
+than the reactive baseline.
 
-## 9. Limitations and future work
-
-- Only one VM trace (`1.csv`) is used. Aggregating many Bitbrains VMs would give a more
-  representative data-centre workload.
-- The LSTM under-predicts at the very start of sharp spikes, which causes the SLA violations.
-  A safety margin on the forecast (for example, provisioning for 1.2x the predicted demand) or
-  predicting several steps ahead can reduce this.
+## Limitations and Future Work
+- Only one VM trace is used. Aggregating many Bitbrains VMs would be more representative of a data centre.
+- The LSTM under-predicts at the start of sharp spikes. A safety margin on the forecast (for example 1.2x
+  the predicted demand) or multi-step forecasting can reduce SLA violations.
 - MAPE is unreliable when the true value is near zero.
-- Memory forecasting is shown in the workload charts, but the models and the simulation target CPU.
+- Models and simulation target CPU. Memory is analysed in the workload charts only.
 
----
-
-## 10. Project structure
-
+## Project Structure
 ```
 cloud_comp/
-|-- 1.csv                         Bitbrains VM trace
-|-- data_prep.py                  load, clean, scale, create sequences
-|-- train_models.py               train and compare ARIMA, XGBoost, LSTM
-|-- cloud_sim.py                  SimPy cloud simulation (predictive vs reactive)
-|-- run_pipeline.py               runs prep -> training -> simulation
-|-- dashboard.py                  Streamlit dashboard
+|-- 1.csv                      Bitbrains trace
+|-- data_prep.py               preprocessing
+|-- train_models.py            ARIMA, XGBoost, LSTM training and comparison
+|-- cloud_sim.py               SimPy simulation
+|-- run_pipeline.py            runs the full pipeline
+|-- dashboard.py               Streamlit dashboard
 |-- requirements.txt
-|-- best_model.pkl, lstm_model.keras, model_artifacts.joblib
-|-- processed_data.joblib, simulation_results.joblib
-|-- model_performance_comparison.png
-`-- screenshots/
+`-- *.joblib, *.pkl, *.keras   saved models and results
 ```
 
-## 11. How to run
-
+## How to Run
 ```powershell
-# 1. activate the virtual environment
 venv\Scripts\activate
-
-# 2. install dependencies
 pip install -r requirements.txt
-
-# 3. run data preparation, training and simulation
 python run_pipeline.py
-
-# 4. open the dashboard (http://localhost:8501)
 streamlit run dashboard.py
 ```
-
-The dashboard also has a **Run / Re-train Full Pipeline** button in the sidebar.
+Dashboard opens at http://localhost:8501
